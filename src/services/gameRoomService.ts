@@ -6,6 +6,7 @@ import {
   Game,
   Player,
   IGameRoomService,
+  Stage,
 } from '../types/server-models';
 import { log } from 'console';
 
@@ -63,6 +64,10 @@ export class GameRoomService implements IGameRoomService {
     return this.gameRooms[roomId];
   }
 
+  public getPlayerIdList(roomId: string) {
+    return Object.keys(this.gameRooms[roomId].players);
+  }
+
   public createGameRoom() {
     console.log(`gameRoomService.createGameRoom()`);
 
@@ -81,11 +86,15 @@ export class GameRoomService implements IGameRoomService {
 
   public addPlayer(roomId: string, player: Player): GameRoom {
     // const gameRoom = this.gameRooms[roomId];
-    log(`addPlayer(): `);
+    log('addPlayer(): adding player to room');
 
     // player added
     this.gameRooms[roomId].players[player.id] = player;
     const playerCount = Object.keys(this.gameRooms[roomId].players).length;
+
+    if (playerCount === 1) {
+      this.gameRooms[roomId].gameState.currentPlayer = player;
+    }
 
     if (playerCount >= this.maxPlayerCount) {
       console.log('addPlayer -> max player count reached');
@@ -103,11 +112,15 @@ export class GameRoomService implements IGameRoomService {
 
   public createMap(roomId: string): GameRoom {
     log(`createMap(${roomId}): `);
+    const firstPlayerId = this.getPlayerIdList(roomId)[0];
     return (this.gameRooms[roomId] = {
       ...this.gameRooms[roomId],
       gameState: {
         ...this.gameRooms[roomId].gameState,
         map: mapBuilder(5, 4, this.gameRooms[roomId].players),
+        currentPlayer: this.gameRooms[roomId].players[firstPlayerId],
+        stage: Stage.Attack,
+        // currentPlayer: this.gameRooms[roomId].players[0],
       },
     });
   }
@@ -139,6 +152,52 @@ export class GameRoomService implements IGameRoomService {
 
   private logRoomCount() {
     console.log(`rooms: ${Object.keys(this.gameRooms).length}`);
+  }
+
+  public endAttack(playerId: string, roomId: string): GameRoom {
+    log(`endAttack(${playerId}, ${roomId}): `);
+
+    // add some validation here
+
+    // any other state changes here
+
+    this.gameRooms[roomId].gameState.stage = Stage.Allocate;
+    return this.gameRooms[roomId];
+  }
+
+  public endTurn(playerId: string, roomId: string): GameRoom {
+    log(`endTurn(${playerId}, ${roomId}): `);
+
+    // add some validation here
+
+    // any other state changes here
+
+    let nextPlayerId = Object.keys(this.gameRooms[roomId].players).find(
+      (id) => id !== playerId
+    );
+
+    // change current player to other player
+    // note: this only works for 2 players
+    this.gameRooms[roomId].gameState.currentPlayer =
+      this.gameRooms[roomId].players[nextPlayerId];
+
+    // change stage to Attack
+    this.gameRooms[roomId].gameState.stage = Stage.Attack;
+
+    return this.gameRooms[roomId];
+  }
+
+  public clickTile(
+    col: number,
+    row: number,
+    playerId: string,
+    roomId: string
+  ): GameRoom {
+    log(`clickTile(${col}, ${row}, ${playerId}, ${roomId}): `);
+
+    // ...
+
+    return this.gameRooms[roomId];
   }
 }
 

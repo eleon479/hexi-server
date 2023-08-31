@@ -22,11 +22,19 @@ export interface IGameRoomService {
   getGameRoom(roomId: string): GameRoom;
   createGameRoom(): string;
   gameRoomPlayerCount(roomId: string): number;
+  endAttack(playerId: string, roomId: string): GameRoom;
+  endTurn(playerId: string, roomId: string): GameRoom;
+  clickTile(
+    col: number,
+    row: number,
+    playerId: string,
+    roomId: string
+  ): GameRoom;
 }
 
 export interface IPlayerService {
   getPlayerBySocketId(socketId: string): Player;
-  insert(socketId: string, playerInfo: PlayerInfo): Player;
+  createPlayer(socketId: string, playerInfo: PlayerInfo): Player;
   assignRoom(playerId: string, room: GameRoom): Player;
   removePlayer(playerId: string): void;
   playerList: { [id: string]: Player };

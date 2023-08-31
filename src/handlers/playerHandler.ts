@@ -6,6 +6,7 @@ import {
   PlayerInfo,
   ServerContext,
   ServerEventType,
+  Stage,
 } from '../types/server-models';
 import { Server, Socket } from 'socket.io';
 
@@ -16,12 +17,10 @@ export const playerHandler = (
 ) => {
   const findGame = (playerInfo: PlayerInfo) => {
     log('findGame()');
-    let player = context.playerService.insert(socket.id, playerInfo);
+    let player = context.playerService.createPlayer(socket.id, playerInfo);
     let { room, isNew } = context.gameRoomService.findOpenRoom();
 
-    log('findGame(): assigning room to player', room.id);
     player = context.playerService.assignRoom(player.id, room);
-    log('findGame(): adding player to room');
     room = context.gameRoomService.addPlayer(room.id, player);
 
     // let the current connection know to listen into assigned room
@@ -63,25 +62,47 @@ export const playerHandler = (
     col: number;
     row: number;
     player: string;
+    room: string;
   }) => {
     // click tile logic
     // take in the event and perform necessary
     // changes to the state
     // delegate to a new MapService if necessary
     console.log(ClientActionType.ClickTile, clickTileEvent);
+
+    const newGameState = context.gameRoomService.clickTile(
+      clickTileEvent.col,
+      clickTileEvent.row,
+      clickTileEvent.player,
+      clickTileEvent.room
+    );
   };
 
-  const endAttack = (event) => {
+  const endAttack = (data: { player: string; room: string }) => {
     // have some logic check incoming event against internal server
     // state. if time allows
     // realistically tho:
     // if all is good, just make sure to update the
     // server state and have those changes propagate?
-    console.log(ClientActionType.EndAttack, event);
+    console.log(ClientActionType.EndAttack, data);
+
+    const newGameState = context.gameRoomService.endAttack(
+      data.player,
+      data.room
+    );
+
+    io.to(data.room).emit(ServerEventType.BoardChanged, newGameState);
   };
 
-  const endTurn = (event) => {
-    console.log(ClientActionType.EndTurn, event);
+  const endTurn = (data: { player: string; room: string }) => {
+    console.log(ClientActionType.EndTurn, data);
+
+    const newGameState = context.gameRoomService.endTurn(
+      data.player,
+      data.room
+    );
+
+    io.to(data.room).emit(ServerEventType.BoardChanged, newGameState);
   };
 
   /*

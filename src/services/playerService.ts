@@ -1,6 +1,6 @@
-import { GameRoom, Player } from '../types/server-models';
+import { GameRoom, Player, IPlayerService } from '../types/server-models';
 
-export class PlayerService {
+export class PlayerService implements IPlayerService {
   private players: {
     [id: string]: Player;
   };
@@ -14,11 +14,12 @@ export class PlayerService {
     return this.players;
   }
 
-  getPlayerBySocketId(socketId) {
+  getPlayerBySocketId(socketId: string): Player {
     return this.players[socketId];
   }
 
-  insert(socketId, playerInfo): Player {
+  createPlayer(socketId, playerInfo): Player {
+    console.log('createPlayer(): creating player', socketId);
     return (this.players[socketId] = {
       id: socketId,
       color: playerInfo.color,
@@ -29,7 +30,8 @@ export class PlayerService {
     });
   }
 
-  assignRoom(playerId, room: GameRoom) {
+  assignRoom(playerId: string, room: GameRoom): Player {
+    console.log('assignRoom(): assigning room to player', room.id);
     return (this.players[playerId] = {
       ...this.players[playerId],
       assignedRoom: room.id,
@@ -37,6 +39,7 @@ export class PlayerService {
   }
 
   removePlayer(playerId) {
+    console.log('removePlayer(): removing player', playerId);
     delete this.players[playerId];
   }
 }
