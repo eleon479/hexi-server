@@ -40,7 +40,17 @@ export interface IPlayerService {
   playerList: { [id: string]: Player };
 }
 
+export interface IGameService {
+  handleTileClick(
+    col: number,
+    row: number,
+    playerId: string,
+    roomId: string
+  ): GameState;
+}
+
 export type ServerContext = {
+  gameService: IGameService;
   gameRoomService: IGameRoomService;
   playerService: IPlayerService;
 };
@@ -64,18 +74,22 @@ export type GameRoom = {
   players: { [id: string]: Player };
   status: string;
   locked: boolean;
-  gameState: Game;
+  gameState: GameState;
   isReady: boolean;
 };
 
-export type Game = {
-  map: GameMap;
-  stage: Stage;
+export type GameState = {
+  gameOver: boolean;
+  gameWinner: Player | null;
   currentPlayer: Player;
+  currentStage: Stage;
+  availablePower: number;
   currentAttackNodeSelected: boolean;
   currentAttackNodeColumn: number;
   currentAttackNodeRow: number;
   currentAttackNodePower: number;
+
+  map: GameMap;
 };
 
 export enum Stage {

@@ -8,6 +8,7 @@ import { GameRoomService } from './services/gameRoomService';
 import { ServerContext } from './types/server-models';
 import { playerHandler } from './handlers/playerHandler';
 import { gameHandler } from './handlers/gameHandler';
+import { GameService } from './services/gameService';
 
 class App {
   private server: http.Server;
@@ -36,6 +37,7 @@ class App {
 
     // initialize game data
     this.serverContext = {
+      gameService: new GameService(),
       gameRoomService: new GameRoomService(),
       playerService: new PlayerService(),
     };
@@ -67,8 +69,6 @@ class App {
       console.log('*'.repeat(10), `connection: ${socket.id}`, '*'.repeat(10));
       playerHandler(this.io, socket, this.serverContext);
       gameHandler(this.io, socket);
-
-      // socket.emit('connection-test', 'welcome!');
     });
   }
 }

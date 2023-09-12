@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import {
   GameMap,
   GameRoom,
-  Game,
+  GameState,
   Player,
   IGameRoomService,
   Stage,
@@ -76,7 +76,18 @@ export class GameRoomService implements IGameRoomService {
       players: {},
       status: 'WaitingForPlayers',
       locked: false,
-      gameState: {} as Game,
+      gameState: {
+        gameOver: false,
+        gameWinner: null,
+        currentPlayer: null,
+        currentStage: null,
+        availablePower: 0,
+        currentAttackNodeSelected: false,
+        currentAttackNodeColumn: null,
+        currentAttackNodeRow: null,
+        currentAttackNodePower: null,
+        map: null,
+      },
       isReady: false,
     };
 
@@ -119,7 +130,7 @@ export class GameRoomService implements IGameRoomService {
         ...this.gameRooms[roomId].gameState,
         map: mapBuilder(5, 4, this.gameRooms[roomId].players),
         currentPlayer: this.gameRooms[roomId].players[firstPlayerId],
-        stage: Stage.Attack,
+        currentStage: Stage.Attack,
         // currentPlayer: this.gameRooms[roomId].players[0],
       },
     });
@@ -154,6 +165,79 @@ export class GameRoomService implements IGameRoomService {
     console.log(`rooms: ${Object.keys(this.gameRooms).length}`);
   }
 
+  // @TODO ewrite/improve the following start/end/reset methods
+
+  startGame(roomId: string): GameRoom {
+    log(`startGame(${roomId}): `);
+    const firstPlayerId = this.getPlayerIdList(roomId)[0];
+
+    // sets attack node to default values
+    // and sets available power to 0
+    this.startAttackStage(roomId);
+
+    // set current player to first player in list
+    return (this.gameRooms[roomId] = {
+      ...this.gameRooms[roomId],
+      gameState: {
+        ...this.gameRooms[roomId].gameState,
+        currentPlayer: this.gameRooms[roomId].players[firstPlayerId],
+      },
+    });
+  }
+
+  startAttackStage(roomId: string): GameRoom {
+    log(`startAttackStage(${roomId}): `);
+
+    this.resetAttackNode(roomId);
+    this.resetAvailablePower(roomId);
+    return (this.gameRooms[roomId] = {
+      ...this.gameRooms[roomId],
+      gameState: {
+        ...this.gameRooms[roomId].gameState,
+        currentStage: Stage.Attack,
+      },
+    });
+  }
+
+  public startAllocateStage(roomId: string): GameRoom {
+    log(`startAllocateStage(${roomId}): `);
+
+    this.resetAttackNode(roomId);
+    this.resetAvailablePower(roomId);
+    return (this.gameRooms[roomId] = {
+      ...this.gameRooms[roomId],
+      gameState: {
+        ...this.gameRooms[roomId].gameState,
+        currentStage: Stage.Allocate,
+      },
+    });
+  }
+
+  public resetAttackNode(roomId: string): GameRoom {
+    log(`resetAttackNode(${roomId}): `);
+    return (this.gameRooms[roomId] = {
+      ...this.gameRooms[roomId],
+      gameState: {
+        ...this.gameRooms[roomId].gameState,
+        currentAttackNodeSelected: false,
+        currentAttackNodeColumn: null,
+        currentAttackNodeRow: null,
+        currentAttackNodePower: null,
+      },
+    });
+  }
+
+  public resetAvailablePower(roomId: string): GameRoom {
+    log(`resetAvailablePower(${roomId}): `);
+    return (this.gameRooms[roomId] = {
+      ...this.gameRooms[roomId],
+      gameState: {
+        ...this.gameRooms[roomId].gameState,
+        availablePower: 0,
+      },
+    });
+  }
+
   public endAttack(playerId: string, roomId: string): GameRoom {
     log(`endAttack(${playerId}, ${roomId}): `);
 
@@ -161,7 +245,7 @@ export class GameRoomService implements IGameRoomService {
 
     // any other state changes here
 
-    this.gameRooms[roomId].gameState.stage = Stage.Allocate;
+    this.gameRooms[roomId].gameState.currentStage = Stage.Allocate;
     return this.gameRooms[roomId];
   }
 
@@ -182,7 +266,7 @@ export class GameRoomService implements IGameRoomService {
       this.gameRooms[roomId].players[nextPlayerId];
 
     // change stage to Attack
-    this.gameRooms[roomId].gameState.stage = Stage.Attack;
+    this.gameRooms[roomId].gameState.currentStage = Stage.Attack;
 
     return this.gameRooms[roomId];
   }
